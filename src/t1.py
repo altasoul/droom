@@ -58,49 +58,55 @@ class Ledger:
         return self.cash
 
 
+# A financial can be run through
+
+class NameMe:
+    # The rules and initial conditions
+    def __init__(self, env):
+        self.env = env
+        self.bills = []
+
+
 class Scenario:
+    # exogenous events
     def __init__(self, env, ledger):
         self.env = env
         self.ledger = ledger
 
 
-class Recurring_Bill:
-    def __init__(self, env, name, start, amount, interval='monthly'):
-        self.env = env
-        self.name = name
-        self.start = start
-        if isinstance(amount, numbers.Number):
-            self.lamount = lambda e: amount
-        else:
-            self.lamount = amount
-        self.interval = interval
-        self.action = env.process(self.run())
-
-    def run(self):
-        env = self.env
-        tu = TimeUtil(env)
-        #yield env.timeout(self.start - env.now)
-        t = env.timeout(self.start - env.now)
-        print(repr(t.callbacks))
-        t.callbacks.append(lambda e: print('callback from', e))
-        while True:
-            amt = self.lamount(env)
-            print("{}: {} bill ${}".format(isodate(env.now), self.name, amt))
-            #yield self.env.timeout(next_month(env.now)-env.now)
-            if self.interval == 'monthly':
-                yield tu.for_a_month()
-            elif self.interval == 'weekly':
-                yield tu.for_a_week()
+def recurring_event(env, start, interval='monthly'):
+    tu = TimeUtil(env)
+    if interval == 'monthly':
+        waiter = tu.for_a_month
+    elif interval == 'weekly':
+        waiter = tu.for_a_week
+    else:
+        raise(ValueError, 'unrecognized interval')
+    yield env.timeout(start - env.now)
+    while True:
+        yield waiter()
 
 
+def recurring_bill(env, start, name, amount, interval='monthly'):
+    if isinstance(amount, numbers.Number):
+        amount_fun = lambda e: amount
+    else:
+        amount_fun = amount
+    for e in recurring_event(env, start, interval):
+        yield e
+        print("{}: {} bill ${}".format(isodate(env.now), name,
+                                       amount_fun(env)))
 
 def setup(env):
-    rwb = Recurring_Bill(env, 'water', simdate('2019-04-15'), 123.45)
-    reb = Recurring_Bill(env, 'electric', simdate('2019-04-10'),
+    rwb = recurring_bill(env, simdate('2019-04-15'), 'water', 123.45)
+    env.process(rwb)
+    reb = recurring_bill(env, simdate('2019-04-10'), 'electric',
                          lambda e: round(random.gauss(100, 30), 2))
-    rgb = Recurring_Bill(env, 'groceries', simdate('2019-04-02'),
+    env.process(reb)
+    rgb = recurring_bill(env, simdate('2019-04-02'), 'groceries',
                          lambda e: round(random.gauss(60, 10), 2),
                          interval='weekly')
+    env.process(rgb)
 
 
 def main():
@@ -111,4 +117,5 @@ def main():
     print(isodate(env.now))
 
 if __name__ == '__main__':
+    random.seed(0)
     main()
