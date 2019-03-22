@@ -51,10 +51,15 @@ class NormalBalance(enum.Enum):
     
 
 class Account:
-    def __init__(self, name: str, normal_balance: NormalBalance,
+    def __init__(self, name: str, normal_balance = 'DR',
                  balance: float = 0.0, description: str = None):
         self.name: str = name
-        self.normal_balance: NormalBalance = normal_balance
+        if normal_balance == 'DR':
+            self.normal_balance = NormalBalance.DR
+        elif normal_balance == 'CR':
+            self.normal_balance = NormalBalance.CR
+        else:
+            self.normal_balance = normal_balance
         self.balance: float = balance
         self.description = description
 
