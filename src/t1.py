@@ -54,7 +54,7 @@ class Account(typing.NamedTuple):
     name: str
     normal_balance: NormalBalance
     balance: float = 0.0
-    description: str = None
+    description: str = ''
 
     def __repr__(self) -> str:
         return f'<Account {self.name} {self.normal_balance.name} balance {self.balance}>'
@@ -68,7 +68,7 @@ class Account(typing.NamedTuple):
         return rv
 
 
-def create_account(name, nb='DR', balance=0, description=None):
+def create_account(name, nb='DR', balance=0, description=''):
     if nb == 'DR':
         normal_balance = NormalBalance.DR
     elif nb == 'CR':
@@ -80,23 +80,43 @@ def create_account(name, nb='DR', balance=0, description=None):
 
 class Ledger:
     def __init__(self):
-        self.accounts = list()
+        self.accounts = dict()
         
     def add_account(self, account):
-        self.accounts.append(account)
+        self.accounts[account.name] = account
 
     def __iter__(self):
-        return iter(self.accounts)
+        return iter(self.accounts.values())
 
     @property
     def balance(self):
         return sum(account.value for account in self)
 
 
+class JournalEntry:
+    def __init__(self, description = None, dr = None,  cr = None):
+        self.description = description
+        self.dr = dr or []
+        self.cr = cr or []
+
+    def __repr__(self) -> str:
+        return f'<JournalEntry DR: {self.dr} CR:{self.cr} {self.description}>'
+
+    def debit(self, account, amount):
+        self.dr.append((account, amount))
+
+    def credit(self, account, amount):
+        self.cr.append((account, amount))
+
+    @property
+    def balanced(self):
+        return sum(amt for (acct, amt) in self.dr) == sum(amt for (acct, amt) in self.cr)
+
+
 class Asset(typing.NamedTuple):
     name: str
     value: float
-    description: str = None
+    description: str = ''
     liquidation_multiple: float = 0.8
 
     @property

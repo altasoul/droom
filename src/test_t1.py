@@ -1,7 +1,7 @@
 import unittest
 
 from t1 import Asset, Account, Ledger, NormalBalance, create_account
-
+from t1 import JournalEntry
 
 class TestAsset(unittest.TestCase):
 
@@ -77,6 +77,7 @@ class TestAccount(unittest.TestCase):
         self.assertEqual(a.balance, 123.45)
         self.assertEqual(a.value, -123.45)
 
+
 class Test_create_account(unittest.TestCase):
 
     def test_repr(self):
@@ -104,12 +105,6 @@ class TestLedger(unittest.TestCase):
     def test_init(self):
         gl = Ledger()
 
-    def x_test_create_account(self):
-        gl = Ledger()
-        gl.create_account('cash')
-        gl.create_account('retained earnings', NormalBalance.CR, balance=123.45)
-        gl.create_account('property taxes payable', 'CR', 51.23)
-
     def test_add_account(self):
         gl = Ledger()
         gl.add_account(create_account('cash'))
@@ -132,13 +127,39 @@ class TestLedger(unittest.TestCase):
         self.assertEqual(gl.balance, -12.34)
         gl.add_account(create_account('accounts receivable', balance=12.34))
         self.assertEqual(gl.balance, 0)
-        return
-
         gl.add_account(create_account('owners equity', NormalBalance.CR, balance=123.45))
         self.assertEqual(gl.balance, -123.45)
         gl.add_account(create_account('property taxes payable', 'CR', 51.23))
         self.assertEqual(gl.balance, -123.45 - 51.23)
         gl.add_account(create_account('retained earnings', 'CR', balance=12.34))
         self.assertEqual(gl.balance, -187.02)
-        gl.add_account(create_account('inventory', balance=174.68))
+        gl.add_account(create_account('inventory', balance=187.02))
         self.assertEqual(gl.balance, 0)
+
+
+class TestJournalEntry(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def test_init(self):
+        j = JournalEntry()
+
+    def test_repr(self):
+        j = JournalEntry(description="testing")
+        self.assertEqual(repr(j), '<JournalEntry DR: [] CR:[] testing>')
+        j.debit('inventory', 20)
+        j.credit('cash', 5)
+        j.credit('accounts payable', 15)
+        self.assertEqual(repr(j),
+		         r'''<JournalEntry DR: [('inventory', 20)] CR:[('cash', 5), ('accounts payable', 15)] testing>''')
+
+    def test_balanced(self):
+        j = JournalEntry()
+        self.assertTrue(j.balanced)
+        j.debit('inventory', 90)
+        self.assertFalse(j.balanced)
+        j.credit('cash', 10)
+        self.assertFalse(j.balanced)
+        j.credit('accounts payable', 80)
+        self.assertTrue(j.balanced)
