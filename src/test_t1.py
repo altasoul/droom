@@ -100,7 +100,11 @@ class Test_create_account(unittest.TestCase):
 class TestLedger(unittest.TestCase):
 
     def setUp(self):
-        pass
+        gl = Ledger()
+        gl.add_account(create_account('cash'))
+        gl.add_account(create_account('retained earnings', NormalBalance.CR, balance=123.45))
+        gl.add_account(create_account('property taxes payable', 'CR', 51.23))
+        self.gl = gl
 
     def test_init(self):
         gl = Ledger()
@@ -112,12 +116,15 @@ class TestLedger(unittest.TestCase):
         gl.add_account(create_account('property taxes payable', 'CR', 51.23))
 
     def test_iter(self):
-        gl = Ledger()
-        gl.add_account(create_account('cash'))
-        gl.add_account(create_account('retained earnings', NormalBalance.CR, balance=123.45))
-        gl.add_account(create_account('property taxes payable', 'CR', 51.23))
-        self.assertEqual('|'.join(a.name for a in gl),
+        self.assertEqual('|'.join(a.name for a in self.gl),
                          'cash|retained earnings|property taxes payable')
+
+    def test_getitem(self):
+        gl = self.gl
+        self.assertEqual(gl['cash'].name, 'cash')
+        self.assertEqual(gl['retained earnings'].balance, 123.45)
+        self.assertEqual(gl['property taxes payable'].normal_balance.name, 'CR')
+
 
     def test_balance(self):
         gl = Ledger()

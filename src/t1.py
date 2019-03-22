@@ -67,6 +67,18 @@ class Account(typing.NamedTuple):
             rv = -self.balance
         return rv
 
+    def debit(self, amount: float) -> None:
+        if self.normal_balance is NormalBalance.DR:
+            self.balance += amount
+        else:
+            self.balance -= amount
+
+    def credit(self, amount: float) -> None:
+        if self.normal_balance is NormalBalance.CR:
+            self.balance += amount
+        else:
+            self.balance -= amount
+
 
 def create_account(name, nb='DR', balance=0, description=''):
     if nb == 'DR':
@@ -80,17 +92,30 @@ def create_account(name, nb='DR', balance=0, description=''):
 
 class Ledger:
     def __init__(self):
-        self.accounts = dict()
+        self.acct_dict = dict()
         
     def add_account(self, account):
-        self.accounts[account.name] = account
+        self.acct_dict[account.name] = account
 
     def __iter__(self):
-        return iter(self.accounts.values())
+        return iter(self.acct_dict.values())
+
+    def __getitem__(self, account_name):
+        return self.acct_dict[account_name]
 
     @property
     def balance(self):
         return sum(account.value for account in self)
+
+    def post(self, journal_entry):
+        if not isinstance(journal_entry, JournalEntry):
+            raise TypeError('JournalEntry expected')
+        if not journal_entry.balanced:
+            raise(ValueError, 'journal entry not balanced')
+        for account, amount in journal_entry.dr:
+            account.debit(amount)
+        for account, amount in journal_entry.cr:
+            account.credit(amount)
 
 
 class JournalEntry:
