@@ -119,10 +119,10 @@ class Ledger:
             raise TypeError('JournalEntry expected')
         if not journal_entry.balanced:
             raise(ValueError, 'journal entry not balanced')
-        for account, amount in journal_entry.dr:
-            account.debit(amount)
-        for account, amount in journal_entry.cr:
-            account.credit(amount)
+        for account_name, amount in journal_entry.dr:
+            self[account_name].debit(amount)
+        for account_name, amount in journal_entry.cr:
+            self[account_name].credit(amount)
 
 
 class JournalEntry:

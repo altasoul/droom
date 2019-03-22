@@ -77,6 +77,16 @@ class TestAccount(unittest.TestCase):
         self.assertEqual(a.balance, 123.45)
         self.assertEqual(a.value, -123.45)
 
+    def test_default_normal_balance(self):
+        a = Account('cash', balance=123.45)
+        self.assertEqual(a.value, 123.45)
+
+    def test_str_normal_balance(self):
+        a = Account('cash', 'DR', balance=123.45)
+        self.assertEqual(a.value, 123.45)
+        a = Account('retained earnings', 'CR', balance=123.45)
+        self.assertEqual(a.value, -123.45)
+
 
 class Test_create_account(unittest.TestCase):
 
@@ -125,7 +135,6 @@ class TestLedger(unittest.TestCase):
         self.assertEqual(gl['retained earnings'].balance, 123.45)
         self.assertEqual(gl['property taxes payable'].normal_balance.name, 'CR')
 
-
     def test_balance(self):
         gl = Ledger()
         gl.add_account(create_account('cash'))
@@ -170,3 +179,31 @@ class TestJournalEntry(unittest.TestCase):
         self.assertFalse(j.balanced)
         j.credit('accounts payable', 80)
         self.assertTrue(j.balanced)
+
+class TestJournalEntryPostToLedger(unittest.TestCase):
+
+    def setUp(self):
+        gl = Ledger()
+        gl.add_account(create_account('cash', balance=60))
+        gl.add_account(create_account('accounts payable', 'CR', 200))
+        gl.add_account(create_account('accounts receivable', balance=300))
+        gl.add_account(create_account('owners equity', NormalBalance.CR, balance=50))
+        gl.add_account(create_account('property taxes payable', 'CR', 190))
+        gl.add_account(create_account('retained earnings', 'CR', balance=40))
+        gl.add_account(create_account('inventory', balance=120))
+        self.assertEqual(gl.balance, 0)
+        self.gl = gl
+
+    def test_post(self):
+        gl = self.gl
+        j = JournalEntry(description="testing")
+        self.assertEqual(repr(j), '<JournalEntry DR: [] CR:[] testing>')
+        j.debit('inventory', 20)
+        j.credit('cash', 5)
+        j.credit('accounts payable', 15)
+        gl.post(j)
+        self.assertEqual(gl.balance, 0)
+        self.assertEqual(gl['cash'].balance, 55)
+        self.assertEqual(gl['inventory'].balance, 140)
+        self.assertEqual(gl['accounts payable'].balance, 215)
+        self.assertEqual(gl.balance, 0)        
