@@ -50,11 +50,13 @@ class NormalBalance(enum.Enum):
     CR = enum.auto()
     
 
-class Account(typing.NamedTuple):
-    name: str
-    normal_balance: NormalBalance
-    balance: float = 0.0
-    description: str = ''
+class Account:
+    def __init__(self, name: str, normal_balance: NormalBalance,
+                 balance: float = 0.0, description: str = None):
+        self.name: str = name
+        self.normal_balance: NormalBalance = normal_balance
+        self.balance: float = balance
+        self.description = description
 
     def __repr__(self) -> str:
         return f'<Account {self.name} {self.normal_balance.name} balance {self.balance}>'
