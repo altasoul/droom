@@ -1,9 +1,11 @@
 
 import datetime
+import enum
 import numbers
 import pdb
 import random
 import simpy
+import typing
 #import time
 
 
@@ -43,35 +45,104 @@ class TimeUtil:
         return self.env.timeout(next_week(now)-now)
 
 
+class NormalBalance(enum.Enum):
+    DR = enum.auto()
+    CR = enum.auto()
+    
+
+class Account(typing.NamedTuple):
+    name: str
+    normal_balance: NormalBalance
+    balance: float = 0.0
+    description: str = None
+
+    def __repr__(self) -> str:
+        return f'<Account {self.name} {self.normal_balance.name} balance {self.balance}>'
+
+    @property
+    def value(self) -> float:
+        if self.normal_balance is NormalBalance.DR:
+            rv = self.balance
+        else:
+            rv = -self.balance
+        return rv
+
+
+def create_account(name, nb='DR', balance=0, description=None):
+    if nb == 'DR':
+        normal_balance = NormalBalance.DR
+    elif nb == 'CR':
+        normal_balance = NormalBalance.CR
+    else:
+        normal_balance = nb
+    return Account(name, normal_balance, balance, description)
+
+
 class Ledger:
-    # very temporary placeholder
     def __init__(self):
-        self.cash = 0
+        self.accounts = list()
+        
+    def add_account(self, account):
+        self.accounts.append(account)
 
-    def devit(self, amt):
-        self.cash += amt        # To accountants Cash is a Debit account
+    def __iter__(self):
+        return iter(self.accounts)
 
-    def credit(self, amt):
-        self.cash -= amt
-
+    @property
     def balance(self):
-        return self.cash
+        return sum(account.value for account in self)
 
 
-# A financial can be run through
+class Asset(typing.NamedTuple):
+    name: str
+    value: float
+    description: str = None
+    liquidation_multiple: float = 0.8
 
-class NameMe:
-    # The rules and initial conditions
+    @property
+    def liquidation_value(self) -> float:
+        return self.value * self.liquidation_multiple
+
+    def __repr__(self) -> str:
+        return f'<Asset {self.name} value {self.value}>'
+
+
+
+class AssetPool:
+    pass
+
+
+
+class Investor:
+    # Assets, Liabilities, strategy
+    def __init__(self, config):
+        self.config = config
+        self.accounts = Ledger()
+
+    def raise_cash(self, amt):
+        # https://www.accountingtools.com/articles/2017/5/17/debits-and-credits
+        pass
+
+
+class Scenario:
+    # Initial conditions, exogenous events, random outside forces
+    def __init__(self, env, ledger):
+        self.env = env
+        self.ledger = ledger
+
+
+class Trial:  # or function in Scenario
+    # Run an Investor in a Scenario to obtain a Trajectory
     def __init__(self, env):
         self.env = env
         self.bills = []
 
 
-class Scenario:
-    # exogenous events
-    def __init__(self, env, ledger):
-        self.env = env
-        self.ledger = ledger
+class Trajectory:
+    # A particular path thru phase spece as the result of a Trial
+    pass
+
+
 
 
 def recurring_event(env, start, interval='monthly'):
