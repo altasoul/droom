@@ -145,11 +145,13 @@ class JournalEntry:
         return sum(amt for (acct, amt) in self.dr) == sum(amt for (acct, amt) in self.cr)
 
 
-class Asset(typing.NamedTuple):
-    name: str
-    value: float
-    description: str = ''
-    liquidation_multiple: float = 0.8
+class Asset:
+    def __init__(self, name: str, value: float, description=None,
+                 liquidation_multiple:float = 0.8):
+        self.name = name
+        self.value = value
+        self.description = description or ''
+        self.liquidation_multiple = liquidation_multiple
 
     @property
     def liquidation_value(self) -> float:
