@@ -178,6 +178,15 @@ class Investor:
         pass
 
 
+# A financial can be run through
+
+class NameMe:
+    # The rules and initial conditions
+    def __init__(self, env):
+        self.env = env
+        self.bills = []
+
+
 class Scenario:
     # Initial conditions, exogenous events, random outside forces
     def __init__(self, env, ledger):
